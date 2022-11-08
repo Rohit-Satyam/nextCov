@@ -28,6 +28,8 @@ picard \
 pybedtools \
 rtg-tools \
 r-upsetr \
+r-gplots \
+r-gsalib \
 samplot \
 samtools  \
 scikit-learn \
