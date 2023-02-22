@@ -54,21 +54,21 @@ process FASTP{
 
     output:
         tuple val(sid), file(fq_1_paired), file(fq_2_paired), emit: trimmed_reads
-				file("${sid}.fastp_stats.json")
-				file("${sid}.fastp_stats.html")
+				file("${sid}.fastp.json")
+				file("${sid}.fastp.html")
 				path "*.log"
 
         script:
-    fq_1_paired = sid + '_R1_P.fastq.gz'
-    fq_2_paired = sid + '_R2_P.fastq.gz'
+    fq_1_paired = sid + '_R1.fastq.gz'
+    fq_2_paired = sid + '_R2.fastq.gz'
 	"""
 	fastp \
 	--in1 ${reads[0]} \
 	--in2 ${reads[1]}\
 	--out1 $fq_1_paired \
 	--out2 $fq_2_paired \
-	--json ${sid}.fastp_stats.json \
-	--html ${sid}.fastp_stats.html 2> ${sid}.log
+	--json ${sid}.fastp.json \
+	--html ${sid}.fastp.html 2> ${sid}.log
     """
 }
 
