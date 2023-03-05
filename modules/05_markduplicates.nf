@@ -12,10 +12,11 @@ process MARKDUP{
         input:
         tuple val(sid), path(bam)
         output:
-        tuple val(sid), path("${sid}.dedup.bam"), emit: dedup_bams
-        path("${sid}_markdup_metrics.txt")
+        tuple val(sid), path("${sid}.dedup.bam")
+        path("${sid}_markdup_metrics.txt"), emit: dedupmtx
         path("${sid}.dedup.bam.bai")
         """
-        gatk MarkDuplicatesSpark -I ${bam} -O ${sid}.dedup.bam -M ${sid}_markdup_metrics.txt --create-output-bam-index true --tmp-dir .
+        gatk MarkDuplicatesSpark -I ${bam} -O ${sid}.dedup.bam \
+        -M ${sid}_markdup_metrics.txt --create-output-bam-index true --optical-duplicate-pixel-distance ${params.opticalDupPixalDis}  --tmp-dir .
         """
 }

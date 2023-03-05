@@ -6,12 +6,12 @@ params.mode = "ibex"
 process TRIMMOMATIC {
 	cpus params.cpus
 	memory params.memory
-  publishDir "${params.output}/02_adapterTrimming", mode: 'copy'
+    publishDir "${params.output}/02_adapterTrimming", mode: 'copy'
 
-	input:
-  	tuple val(sid), path(reads)
-  output:
-  	tuple val(sid), path(fq_1_paired), path(fq_2_paired), emit:trimmed_reads
+input:
+    tuple val(sid), path(reads)
+output:
+    tuple val(sid), path(fq_1_paired), path(fq_2_paired), emit:trimmed_reads
 		path "*.log"
         script:
     fq_1_paired = sid + '_R1_P.fastq.gz'
@@ -49,26 +49,30 @@ process FASTP{
 	memory params.memory
 	publishDir "${params.output}/02_adapterTrimming", mode: 'copy'
 
-    input:
+input:
         tuple val(sid), path(reads)
 
     output:
-        tuple val(sid), file(fq_1_paired), file(fq_2_paired), emit: trimmed_reads
-				file("${sid}.fastp.json")
-				file("${sid}.fastp.html")
-				path "*.log"
+        tuple val(sid), path(fq_1_paired), path(fq_2_paired)
+		path("${sid}.fastp.json"), emit: fastp_logs
+		path("${sid}.fastp.html")
+		path "*.log"
 
         script:
     fq_1_paired = sid + '_R1.fastq.gz'
     fq_2_paired = sid + '_R2.fastq.gz'
-	"""
+    """
 	fastp \
 	--in1 ${reads[0]} \
 	--in2 ${reads[1]}\
+    --thread ${task.cpus} \
 	--out1 $fq_1_paired \
 	--out2 $fq_2_paired \
 	--json ${sid}.fastp.json \
-	--html ${sid}.fastp.html 2> ${sid}.log
+	--html ${sid}.fastp.html \
+    ${params.fastp_ext} \
+    2> ${sid}.log
+
     """
 }
 
@@ -81,7 +85,7 @@ process POSTTRIMFASTQC{
         tuple val(sid), path(reads1), path(reads2)
 
     output:
-        path "*"
+        path "*", emit: postfastqc
 
     """
     fastqc -t ${task.cpus} ${reads1} ${reads2}

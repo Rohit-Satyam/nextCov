@@ -36,8 +36,9 @@ process VAFATOR {
     #--soft-filter SUBCLONAL \
     #--output-type v - > ${sid}.${caller}.vaf.annot.vcf
 
+    ## Bad variant calls Tagging
     bcftools view -Ob ${sid}.${caller}.vaf.vcf.gz   | \
-    bcftools filter --exclude 'INFO/vafator_af < 0.5 && INFO/vafator_dp < 100 && INFO/vafator_ac < 50' \
+    bcftools filter --exclude 'INFO/vafator_af < 0.5 || INFO/vafator_dp < 100 || INFO/vafator_ac < 50 ' \
     --soft-filter POOR_CALLS --output-type v - | bcftools norm -d both - > ${sid}.${caller}.vaf.annot.vcf
 
     bgzip -c ${sid}.${caller}.vaf.annot.vcf > ${sid}.${caller}.vaf.annot.vcf.gz
@@ -54,8 +55,8 @@ process PHASING {
 
     input:
         tuple val(sid), val(caller), path(vcf)
-        val(fasta)
-        val(gtf)
+        path(reference)
+        path(gtf)
 
     output:
     tuple val(sid), val(caller), path("${sid}.${caller}.phased.vcf.gz"), emit: annotated_vcf
@@ -64,42 +65,16 @@ process PHASING {
 
     script:
     """
-    python $projectDir/modules/phasing.py \
-    --fasta ${fasta} \
+    bcftools view -f 'PASS,.' ${vcf} > ${sid}.${caller}.temp.vcf
+    python $projectDir/bin/phasing.py \
+    --fasta ${reference.toRealPath()} \
     --gtf ${gtf} \
-    --input-vcf ${vcf} \
+    --input-vcf ${sid}.${caller}.temp.vcf \
     --output-vcf ${sid}.${caller}.phased.vcf
+
     bgzip -c ${sid}.${caller}.phased.vcf > ${sid}.${caller}.phased.vcf.gz
     tabix -p vcf ${sid}.${caller}.phased.vcf.gz
     bcftools index ${sid}.${caller}.phased.vcf.gz
     """
 }
 
-process FILTERING {
-    cpus params.cpus
-    memory params.memory
-    publishDir "${params.output}/08_variantAnnotation/phased/${caller}", pattern: "${sid}.${caller}.phased.{vcf.gz,vcf.gz.tbi,vcf.gz.csi}", mode: 'copy'
-
-
-    input:
-        tuple val(sid), val(caller), path(vcf)
-        val(fasta)
-        val(gtf)
-
-    output:
-    tuple val(sid), val(caller), path("${sid}.${caller}.phased.vcf.gz"), emit: annotated_vcf
-    path "${sid}.${caller}.phased.vcf.gz.tbi"
-    path "${sid}.${caller}.phased.vcf.gz.csi"
-
-    script:
-    """
-    python $projectDir/modules/phasing.py \
-    --fasta ${fasta} \
-    --gtf ${gtf} \
-    --input-vcf ${vcf} \
-    --output-vcf ${sid}.${caller}.phased.vcf
-    bgzip -c ${sid}.${caller}.phased.vcf > ${sid}.${caller}.phased.vcf.gz
-    tabix -p vcf ${sid}.${caller}.phased.vcf.gz
-    bcftools index ${sid}.${caller}.phased.vcf.gz
-    """
-}

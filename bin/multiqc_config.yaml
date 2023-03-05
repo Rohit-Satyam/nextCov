@@ -1,0 +1,6 @@
+# Titles to use for the report.
+title: "nextCOV"
+subtitle: "Summary & Statistics"
+intro_text: "MultiQC reports for SARS-CoV-2 Amplicon Data."
+report_header_info:
+        - Analyzed by: 'Pathogen Genomics Laboratory, KAUST, SA'

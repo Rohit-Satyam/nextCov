@@ -1,0 +1,76 @@
+---
+title: "nextCov Sample Summary"
+author: "KAUST@nextCov"
+date: "`r Sys.Date()`"
+output:
+    BiocStyle::html_document:
+      toc_float: true
+    BiocStyle::pdf_document: default
+params:
+  beforefq: bfq
+  samtools: sam
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+      echo    = FALSE
+    , warning = FALSE
+    , message = FALSE
+)
+```
+
+```{r}
+library(dplyr)
+library(pander)
+library(ggpubr)
+library(dplyr)
+library(ngsReports)
+library(plotly)
+```
+# Before Trimming FASTQC
+
+```{r}
+beforefqFiles <- params$beforefq
+files <- list.files(beforefqFiles, pattern = "fastqc.zip$", full.names = TRUE)
+fdl <- FastqcDataList(files)
+reads <- readTotals(fdl)
+removeYaxis <- theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p1 <- plotReadTotals(fdl) %>% ggplotly()
+p2 <- fdl |> (\(.) {plotBaseQuals(.)+removeYaxis }) () |> ggplotly()
+p3 <- plotSeqQuals(fdl)%>% ggplotly()
+p4 <- fdl |> (\(.) {plotSeqContent(.)+removeYaxis }) () |> ggplotly()
+p5 <- plotAdapterContent(fdl, showlegend=FALSE)%>% ggplotly() |> layout(legend = list(orientation = "h", x = 0.4, y = -0.2))
+p6 <- fdl |> (\(.) {plotDupLevels(.)+removeYaxis }) () |> ggplotly()
+
+subplot(p1,p2, shareY = T)
+subplot(p3,p4, shareY = T)
+subplot(style(p5, showlegend=FALSE),p6, shareY = T)
+```
+
+
+# After Trimming FASTQC
+
+```{r}
+
+
+```
+
+# Alignment Stats
+```{r}
+## Pull in the data
+file <- params$samtools
+
+flagstatLog <- list.files(path = file, pattern = "samtools.txt", full.names = T)
+df <- importNgsLogs(flagstatLog, type = "flagstat")
+
+df <- df %>% dplyr::filter(flag == "mapped" | flag == "properly paired" | flag == "singletons") %>% .[, -3]
+df$Filename <- stringr::str_split_fixed(df$Filename, pattern="[.]", n=2)[,1]
+ggbarplot(df, x="Filename",y="QC-passed",color = "flag", fill = "flag" )
+```
+
+```
+rmarkdown::render(input  = '/home/subudhak/Documents/COVID_Project/nextCov/modules/nextCovreport.Rmd', params = list(beforefq = "~/Documents/COVID_Project/shortread/dataset1_sabir_Aug/results/01_rawfastqc", samtools= '/home/subudhak/Documents/COVID_Project/shortread/dataset1_sabir_Aug/results/withoutivar/05_markduplicates'))
+```

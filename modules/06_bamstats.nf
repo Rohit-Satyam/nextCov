@@ -12,7 +12,7 @@ process BAMSTATS{
         input:
         tuple val(sid), path(bam)
         output:
-        path("*")
+        path "*"
 
         script:
         """
