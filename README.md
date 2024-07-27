@@ -16,7 +16,7 @@ fastqc  \
 fonttools \
 gatk4  \
 ghostscript \
-gtfparse \
+gtfparse=1.2.1 \
 intervene \
 ivar  \
 lofreq \
