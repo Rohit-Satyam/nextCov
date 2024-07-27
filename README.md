@@ -5,7 +5,7 @@ A short read Nextflow pipeline for SARS-Cov2 variant calling and assembly develo
 ## Environment Setup
 
 ```
-mamba create -n temp -c conda-forge -c bioconda \
+mamba create -n nextcov -c conda-forge -c bioconda \
 assembly-stats  \
 bcftools \
 biopython \
